@@ -404,48 +404,55 @@ All validators run server-side. Players never see the check logic.
 
 ---
 
-## Sandbox Architecture
+## Sandbox Architecture — Runs in the Browser (₹0)
 
-Every user gets their own ephemeral Linux container. Commands run for real.
+LinuxQuest uses **CheerpX** — a WebAssembly Linux environment that runs entirely inside the player's browser tab. No server-side containers. No Docker. No VPS for the sandbox.
 
 ```
-User types command in browser terminal
+Player types  start
     ↓
-xterm.js → WebSocket → Go backend
+Frontend calls GET /api/sandbox/image-url/:chapter   ← Go backend checks progression gate
     ↓
-docker exec <container_id> <command>
+Cloudflare R2 returns signed URL for ch<N>.img       ← free tier: 10GB, 10M reads/month
     ↓
-Output streams back via WebSocket → xterm.js
+CheerpX (WebAssembly) boots Alpine Linux in the browser tab
+    ↓
+xterm.js ↔ CheerpX stdin/stdout (100% local, zero server traffic)
+    ↓
+Player types commands — execute on their own CPU, instantly
 ```
 
-**Container constraints:**
+**What this means:**
+- Real Linux commands (`grep`, `ps`, `kill`, `awk`, `chmod`, `ssh`) work for real
+- Zero server load from terminal I/O — every command runs locally in the browser
+- `rm -rf /` is harmless — only browser memory, resets on next `start`
+- Network commands in Ch 9–10 use pre-recorded `.pcap` files instead of live traffic
+
+**Disk image delivery:**
 
 | Limit | Value |
 |-------|-------|
-| CPU | 0.5 core |
-| RAM | 128 MB |
-| Disk | 512 MB |
-| Network | Blocked (Ch 9/10: simulated internal net only) |
-| Idle timeout | 30 min → auto-destroy |
-
-**Future:** Firecracker MicroVM migration — sub-125ms cold starts, stronger isolation at 1000+ concurrent users. `DockerDriver` and `FirecrackerDriver` share the same `SandboxManager` interface from day one. Swap the driver, zero architecture changes.
+| Image size | < 200MB per chapter |
+| Storage (R2) | ~2GB total (12 chapters) — free tier allows 10GB |
+| Reads (R2) | Free tier: 10M/month — enough for thousands of sessions |
+| Boot time | < 5s (cached after first load, instant on replay) |
+| Server cost | ₹0 — no container processes, no VPS for sandbox |
 
 ---
 
 ## Tech Stack
 
-| Concern | Choice |
-|---------|--------|
-| Terminal emulator | `xterm.js` + `xterm-addon-fit` |
-| Frontend | React + Vite (TypeScript) |
-| Backend | Go + Gin |
-| Sandbox (v1) | Docker + Alpine Linux |
-| Sandbox (future) | Firecracker MicroVMs |
-| WebSocket | Native browser + Go goroutines |
-| Auth | Google OAuth 2.0 (free) |
-| Email | Gmail SMTP with App Password |
-| DB | PostgreSQL (Supabase free tier) |
-| Deployment | Hetzner VPS + Docker Compose |
+| Concern | Choice | Cost |
+|---------|--------|------|
+| Terminal emulator | `xterm.js` + `xterm-addon-fit` | Free |
+| Frontend | React + Vite (TypeScript) on Vercel | Free |
+| Backend API | Go + Gin on Fly.io | Free |
+| **Linux sandbox** | **CheerpX (WebAssembly) — runs in browser** | **Free** |
+| Disk images | Cloudflare R2 (~2GB, 12 images) | Free |
+| Auth | Google OAuth 2.0 | Free |
+| Email | Gmail SMTP with App Password | Free |
+| DB | PostgreSQL on Supabase | Free |
+| **Total** | | **₹0/month** |
 
 ---
 
@@ -453,13 +460,13 @@ Output streams back via WebSocket → xterm.js
 
 | Risk | Mitigation |
 |------|-----------|
-| Docker container escape | `--security-opt=no-new-privileges`, drop all caps, read-only root FS |
-| Container sprawl | 1 per user hard limit, 30 min idle → auto-destroy |
-| `rm -rf /` inside container | Ephemeral — let it happen. Auto-recreate for next objective |
-| Slow container startup | Pre-warmed pool; assign on session start |
+| Player modifying disk image in browser | Image is downloaded read-only from R2; CheerpX mounts it as read-only; in-session writes go to browser memory only |
+| Flag extracted from disk image | Flags are NOT stored in disk images — only the puzzle environment. Flag hash lives in the DB, checked server-side |
+| Chapter skipping | Progression gate enforced server-side before R2 URL is issued — no URL = no image = no access |
+| R2 URL leaking | URLs expire in 15 minutes + are tied to authenticated session |
 | Cheating (inspecting validators) | All validators server-side only, never sent to client |
 | Elo manipulation (alt accounts) | Rate-limit + email verification + IP fingerprinting |
-| Chapter skipping | Strict linear progression gate in backend — `canAccessChapter()` check |
+| CheerpX slow boot | Disk images cached in browser after first load — replay is instant |
 | Community campaign abuse | Review queue + sandboxed validator execution |
 
 ---

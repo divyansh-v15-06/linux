@@ -12,12 +12,13 @@
 **Flagship campaign:** Operation Antariksha (11 chapters, story in `story.md`).
 **Stack:**
 - Frontend: React + Vite (TypeScript) — single-page, shell-only UI
-- Backend: Go + Gin
+- Backend: Go + Gin (Fly.io free tier)
 - Database: PostgreSQL (Supabase free tier)
 - Auth: Google OAuth 2.0 + JWT
 - Email: Gmail SMTP with App Password
-- Sandbox: Docker → Firecracker (future)
-- Realtime: WebSockets (terminal I/O, leaderboard)
+- **Sandbox: CheerpX (WebAssembly Linux — runs in the browser, zero server cost)**
+- Disk images: Cloudflare R2 free tier (10GB)
+- Realtime: WebSockets (leaderboard updates only — no terminal I/O to server)
 
 **Key files to read before coding:**
 - `README.md` — full platform design (merged, authoritative)
@@ -32,9 +33,10 @@
 - Do NOT build a traditional UI — the frontend is a shell. No nav bars, no buttons, no modals. Read `FRONTEND.md`.
 - Do NOT expose flag values or validator logic to the client — server-side only.
 - Do NOT use placeholder data in UI — pull content from `story.md`.
-- Do NOT build at container runtime — pre-build Docker images in `sandbox/<chapter>/`.
+- Do NOT use Docker or any server-side sandbox — Linux runs in the browser via CheerpX.
+- Do NOT expose flag values or validator logic to the client — flag hashes compared server-side only.
 - Every new feature needs a working test before marking `[x]`.
-- All containers must be sandboxed — no host filesystem access, no outbound internet.
+- Disk images are pre-built and hosted on Cloudflare R2 — never generated at runtime.
 
 ---
 
@@ -45,11 +47,11 @@
   ```
   linuxquest/
   ├── app/          ← React + Vite frontend (shell UI)
-  ├── server/       ← Go + Gin backend
-  ├── sandbox/      ← Docker images per chapter
+  ├── server/       ← Go + Gin backend (Fly.io)
+  ├── images/       ← Linux disk images per chapter (uploaded to R2)
   ├── campaigns/    ← JSON campaign + chapter definitions
   ├── docs/         ← Architecture, API docs
-  └── scripts/      ← Dev utilities, seed scripts
+  └── scripts/      ← Dev utilities, seed scripts, image builder
   ```
 - [ ] Add root `Makefile` with targets: `dev`, `build`, `test`, `lint`, `sandbox`
 - [ ] Add `.env.example` with all required env vars documented:
@@ -187,19 +189,20 @@ smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, body)
 
 ---
 
-### 2.4 Sandbox API
-- [ ] `POST /api/sandbox/start` — check progression gate, spin up Docker container for chapter, return `session_id` + WebSocket URL
-- [ ] `DELETE /api/sandbox/:session_id` — stop and remove container
-- [ ] `GET /api/sandbox/:session_id/status` — check container health
-- [ ] Auto-expire containers after 30 minutes of inactivity
-- [ ] Container constraints (enforced at `docker run`):
-  - `--network none` (Ch 1–8, 11) or isolated internal net (Ch 9–10)
-  - `--read-only` root FS with `--tmpfs /tmp --tmpfs /home/player`
-  - `--cpus 0.5 --memory 128m`
-  - `--security-opt=no-new-privileges --cap-drop ALL`
-- [ ] Pre-pull chapter images at server startup — never build at runtime
+### 2.4 Sandbox — CheerpX Image API
 
-**Acceptance criteria:** Sandbox starts in <3s. Container cannot reach the internet. Auto-destroys after timeout. `rm -rf /` inside container is harmless — new container spawns for next attempt.
+> **No Docker. No VPS for sandbox. Linux runs in the user's browser via CheerpX (WebAssembly).**
+> This section is only about serving disk images — not running containers server-side.
+
+- [ ] `GET /api/sandbox/image-url/:chapterNum` — return a signed Cloudflare R2 URL for the chapter disk image
+  - Check progression gate before returning URL
+  - URL expires in 15 minutes (player must be logged in and chapter unlocked)
+- [ ] Cloudflare R2 bucket setup:
+  - Bucket: `linuxquest-images` (free tier: 10GB storage, 10M reads/month)
+  - One `.img` file per chapter: `ch0.img`, `ch1.img` … `ch11.img`
+  - Images are read-only and pre-built via `scripts/build-image.sh`
+
+**Acceptance criteria:** API returns a valid R2 URL only if the chapter is unlocked. URL is time-limited. No server-side process is spawned.
 
 ---
 
@@ -300,9 +303,14 @@ smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, body)
   - Unlocked: transmission animation → brief auto-prints from `story.md`
   - Locked: `[ACCESS DENIED]` message with progress indicator
 - [ ] Prompt hostname changes to chapter server (e.g. `arjun@sac-blr-01`)
-- [ ] `start` calls `POST /api/sandbox/start`, opens WebSocket, switches terminal to live container I/O
-- [ ] `exit` / `Ctrl+D` inside sandbox closes WebSocket, returns to mission shell
+- [ ] `start` flow:
+  1. Call `GET /api/sandbox/image-url/:chapterNum` → get signed R2 URL
+  2. Load CheerpX with the disk image URL: `CheerpXEnv.create({ mounts: [{ type: 'disk', url }] })`
+  3. Boot Alpine Linux inside the browser tab — no WebSocket to server needed
+  4. Connect CheerpX stdin/stdout to xterm.js directly in the browser
+- [ ] `exit` / `Ctrl+D` destroys the CheerpX instance, returns to mission shell
 - [ ] `submit ANTARIKSHA{...}` calls submit API, prints green (correct) or red (wrong) result
+- [ ] Flag validation still happens server-side — compare SHA-256 hash, never expose plaintext
 
 **Acceptance criteria:** Full chapter loop works terminal-only. Locked chapter shows correct message. Flag submission gives immediate visual feedback.
 
@@ -322,36 +330,54 @@ smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, body)
 
 ---
 
-### 3.6 WebSocket Sandbox Integration
-- [ ] Connect to `ws://backend/sandbox/:session_id` when player runs `start`
-- [ ] Pipe all xterm.js stdin → WebSocket → container stdin
-- [ ] Pipe all container stdout → WebSocket → xterm.js stdout
-- [ ] On disconnect: print `[CONNECTION LOST — reconnecting...]` in amber, auto-retry 3×
-- [ ] On container timeout: print `[SESSION EXPIRED — type  cd ch<N>  to restart]`
-- [ ] `Ctrl+D` / `exit` gracefully closes WebSocket and returns to mission shell
+### 3.6 CheerpX Browser Integration
+- [ ] Install CheerpX: `npm install @leaningtech/cheerpx`
+- [ ] On `start` command:
+  ```js
+  const imageUrl = await api.getSandboxImageUrl(chapterNum); // signed R2 URL
+  const cx = await CheerpXEnv.create({
+    mounts: [{ type: 'disk', url: imageUrl, passphrase: null }]
+  });
+  const proc = await cx.spawn('/bin/sh', [], {
+    stdin: xterm,
+    stdout: xterm,
+    stderr: xterm
+  });
+  ```
+- [ ] xterm.js connects directly to CheerpX process stdin/stdout — no server in the loop
+- [ ] On `exit`: call `cx.terminate()`, return to mission shell
+- [ ] Linux boots in browser in <5s (disk image is downloaded from R2 + cached)
+- [ ] Browser caches the disk image after first load — subsequent chapter replays are instant
+- [ ] `rm -rf /` is harmless — browser memory only, resets on next `start`
+- [ ] Network inside CheerpX: disabled by default (Ch 9–10 use simulated file-based network puzzles instead of live tcpdump)
 
-**Acceptance criteria:** Player types real Linux commands in browser, they execute in Docker container, output appears in <200ms.
+**Acceptance criteria:** Player types real Linux commands in browser, they execute locally via CheerpX WebAssembly, output appears in <100ms. Zero server load from terminal I/O.
 
 ---
 
-## Phase 4 — Sandbox Content (Chapter Files)
+## Phase 4 — Disk Image Content (Chapter Filesystems)
 
-For each chapter, create `sandbox/chapter-<N>/` with a `Dockerfile` and pre-seeded filesystem:
+> **No Dockerfiles. Build Alpine Linux ext4 disk images using `scripts/build-image.sh`.**
+> Each image is uploaded to Cloudflare R2. CheerpX mounts it in the browser.
 
-- [ ] **Ch 0:** Basic filesystem with `hint_*.txt` breadcrumbs hidden in subdirectories
-- [ ] **Ch 1:** Scattered files, mislabeled directories, partially overwritten incident log with SHIVA payload
-- [ ] **Ch 2:** 500,000-line telemetry log with `SHIVA_PING` in exactly 60 lines
-- [ ] **Ch 3:** Three running processes — one SHIVA (high CPU), two legitimate firewall daemons with similar names
-- [ ] **Ch 4:** Malicious cron file in `/etc/cron.d/` mimicking a legitimate package name
-- [ ] **Ch 5:** Modified SUID binary that grants root shell to any user
-- [ ] **Ch 6:** Staged `.tar.gz` archive + `/backup/baseline.tar.gz` for diff
-- [ ] **Ch 7:** 2.3M-line mixed JSON/plaintext proxy log with 47 matching POST requests with steganographic User-Agent
-- [ ] **Ch 8:** 14-node Docker network simulation with shared NFS mount worm loop
-- [ ] **Ch 9:** `tcpdump` on `eth1` with live anomalous DNS query pattern to C2 server
-- [ ] **Ch 10:** 3-hop SSH jump chain (`jump1 → jump2 → target`) with different keys per hop
-- [ ] **Ch 11:** systemd service with respawn watchdog + dependency chain — must stop in correct order
+For each chapter, create `images/chapter-<N>/rootfs/` with pre-seeded filesystem content, then build to `ch<N>.img`:
 
-**Acceptance criteria:** Each chapter's flag is ONLY obtainable by solving the puzzle. Direct file reads cannot reveal the flag. All images build in <60s. All images <500MB.
+- [ ] **Ch 0:** Basic Alpine Linux + `hint_*.txt` breadcrumbs hidden in subdirectories
+- [ ] **Ch 1:** Scattered files, mislabeled directories, partially overwritten incident log with SHIVA payload filename hidden inside
+- [ ] **Ch 2:** 500,000-line telemetry log at `/var/log/telemetry/tmt-04-58.log` with `SHIVA_PING` in exactly 60 lines
+- [ ] **Ch 3:** Init scripts that launch 3 processes on boot — one high-CPU SHIVA process, two legitimate daemon lookalikes
+- [ ] **Ch 4:** Malicious file in `/etc/cron.d/` mimicking a legitimate package name
+- [ ] **Ch 5:** Modified SUID binary in `/usr/bin/` that spawns root shell
+- [ ] **Ch 6:** Staged `.tar.gz` at unexpected path + `/backup/baseline.tar.gz` for comparison
+- [ ] **Ch 7:** 2.3M-line mixed JSON/plaintext log at `/var/log/proxy/access.log` with 47 steganographic POST entries
+- [ ] **Ch 8:** Shell worm script + "shared" directory simulating NFS mount infection across fake node dirs
+- [ ] **Ch 9:** Pre-recorded DNS query log + packet capture file (`.pcap`) — player uses `tcpdump -r` not live capture
+- [ ] **Ch 10:** Multi-hop SSH config pre-loaded with keys in `/home/player/.ssh/` — `ssh-agent` pre-configured
+- [ ] **Ch 11:** systemd service unit files pre-installed with respawn watchdog dependency chain
+
+**Build script:** `scripts/build-image.sh <chapter>` → creates Alpine rootfs → packs to ext4 `.img` → uploads to R2
+
+**Acceptance criteria:** Each chapter's flag is ONLY obtainable by solving the puzzle. Images are <200MB each. Total R2 storage <2GB (well within free 10GB tier). CheerpX boots each image in <5s.
 
 ---
 
