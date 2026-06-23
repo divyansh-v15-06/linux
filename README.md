@@ -514,6 +514,7 @@ Player types commands — execute on their own CPU, instantly
 | [`story.md`](./story.md) | Classified mission dossiers for all 11 chapters |
 | [`FRONTEND.md`](./FRONTEND.md) | Shell-only UI spec — commands, virtual filesystem, design tokens |
 | [`AGENT_TODO.md`](./AGENT_TODO.md) | Phased build task list with acceptance criteria |
+| [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Step-by-step deploy guide — Vercel, Fly.io, Supabase, R2, OAuth |
 
 ---
 
