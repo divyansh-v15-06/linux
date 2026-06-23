@@ -256,8 +256,13 @@ smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, body)
   - `--bg: #0d1117` · `--text: #c9d1d9` · `--green: #39ff14`
   - `--red: #ff4444` · `--amber: #ffaa00` · `--dim: #444c56`
 - [ ] Thin single-line status bar at top: `[ISRO-CIRT] <cwd> | <XP>` — updates on navigation
+- [ ] **Copy-paste disabled** — block all paste vectors:
+  - `Ctrl+V` / `Ctrl+Shift+V` via `attachCustomKeyEventHandler` → returns `false`
+  - Right-click via `contextmenu` → `preventDefault()`
+  - Browser paste event → `preventDefault()` + `stopPropagation()`
+  - On paste attempt: print `[PASTE DISABLED] Type the command. No shortcuts here.` in amber
 
-**Acceptance criteria:** Site loads as full-screen black terminal. Boot sequence plays. Prompt appears. No other UI visible.
+**Acceptance criteria:** Site loads as full-screen black terminal. Boot sequence plays. Prompt appears. No other UI visible. Ctrl+V, right-click paste, and middle-click paste all show the disabled message — nothing is pasted.
 
 ---
 

@@ -13,6 +13,17 @@ The "app" is a virtual filesystem. Navigation = Linux commands.
 The player never leaves the terminal — not for menus, not for their profile,
 not for leaderboards, not for mission briefs. Everything renders inside the shell.
 
+**Copy-paste is disabled. Always. No exceptions.**
+
+> *"Copy-paste is disabled. This is not a bug. LinuxQuest teaches commands through
+> repetition. Typing `grep -r "SHIVA" /var/log/` ten times is the point.
+> Your fingers will remember it when your terminal at work doesn't have hints."*
+
+When a player tries to paste:
+```
+[PASTE DISABLED] Type the command. No shortcuts here.
+```
+
 ---
 
 ## Boot Sequence
@@ -290,6 +301,29 @@ No other fonts. No colors outside this palette.
 - ❌ No cards, grids, or dashboard layouts
 - ❌ No loading spinners — use terminal-style progress bars (`████████ 80%`)
 - ❌ No toast notifications — print to terminal instead
+- ❌ **No copy-paste** — block Ctrl+V, Ctrl+Shift+V, right-click, and the browser paste event
+
+**Copy-paste implementation (xterm.js):**
+```js
+// Block Ctrl+V / Ctrl+Shift+V
+terminal.attachCustomKeyEventHandler((e) => {
+  if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
+    terminal.writeln('\r\n\x1b[33m[PASTE DISABLED] Type the command. No shortcuts here.\x1b[0m');
+    return false;
+  }
+  return true;
+});
+
+// Block right-click context menu
+terminal.element.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Block browser-level paste
+terminal.element.addEventListener('paste', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  terminal.writeln('\r\n\x1b[33m[PASTE DISABLED] Type the command. No shortcuts here.\x1b[0m');
+});
+```
 
 ---
 
