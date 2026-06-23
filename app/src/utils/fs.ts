@@ -195,6 +195,176 @@ Status: LOCKED (Complete ch0 first)
 `
                         }
                       }
+                    },
+                    ch2: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch2: The Signal
+Location: Chennai
+-----------------
+Identify the destination IP of the SHIVA_PING packet stream in the log telemetry file.
+
+Status: LOCKED (Complete ch1 first)
+`
+                        }
+                      }
+                    },
+                    ch3: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch3: The Hunt
+Location: Mumbai
+----------------
+A rogue processes is sending password credentials. Find the correct PID and name and kill it.
+
+Status: LOCKED (Complete ch2 first)
+`
+                        }
+                      }
+                    },
+                    ch4: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch4: Cronjob of Doom
+Location: Delhi
+---------------
+SHIVA has planted a persistence backdoor in the cron jobs. Disable it and fetch schedule.
+
+Status: LOCKED (Complete ch3 first)
+`
+                        }
+                      }
+                    },
+                    ch5: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch5: Permissions
+Location: Hyderabad
+-------------------
+A modified SUID binary allows root escalation. Find and modify permissions, lock compromised user.
+
+Status: LOCKED (Complete ch4 first)
+`
+                        }
+                      }
+                    },
+                    ch6: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch6: The Archive
+Location: Pune
+--------------
+Find the compressed file staging archive, verify its integrity and compare hashes with baseline.
+
+Status: LOCKED (Complete ch5 first)
+`
+                        }
+                      }
+                    },
+                    ch7: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch7: Text Surgeon
+Location: Kolkata
+-----------------
+Extract characters from proxy logs and decode targeting coordinates.
+
+Status: LOCKED (Complete ch6 first)
+`
+                        }
+                      }
+                    },
+                    ch8: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch8: The Shell Wars
+Location: Ahmedabad
+-------------------
+Write a robust shell script to clean cron entries across a multi-node cluster securely.
+
+Status: LOCKED (Complete ch7 first)
+`
+                        }
+                      }
+                    },
+                    ch9: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch9: Ghost Signal
+Location: Chennai
+-----------------
+Listen on network interfaces and identify internal and external C2 IP addresses from raw DNS traffic.
+
+Status: LOCKED (Complete ch8 first)
+`
+                        }
+                      }
+                    },
+                    ch10: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch10: SSH Tunnels
+Location: Remote
+----------------
+Tunnel through three secure jump hosts using private keys to download memory dump database.
+
+Status: LOCKED (Complete ch9 first)
+`
+                        }
+                      }
+                    },
+                    ch11: {
+                      type: 'dir',
+                      permissions: 'dr-xr-xr-x',
+                      children: {
+                        brief: {
+                          type: 'file',
+                          permissions: '-rw-r--r--',
+                          content: `[MISSION DOSSIER] ch11: Final Shutdown
+Location: Sriharikota
+---------------------
+Inspect systemd service dependencies, disable watchdog timers, and stop services in precise sequence.
+
+Status: LOCKED (Complete ch10 first)
+`
+                        }
+                      }
                     }
                   }
                 }

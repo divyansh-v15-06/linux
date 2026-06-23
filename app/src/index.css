@@ -22,3 +22,9 @@ html, body, #root {
 .xterm-screen {
   background-color: #0d1117 !important;
 }
+
+@media (max-width: 768px) {
+  .xterm {
+    padding: 4px !important;
+  }
+}

@@ -45,9 +45,12 @@ wrangler login
 3. APIs & Services → OAuth consent screen → External → Fill in app name
 4. APIs & Services → Credentials → Create OAuth 2.0 Client ID
    - Application type: **Web application**
-   - Authorized redirect URIs:
-     - `http://localhost:8080/api/auth/google/callback` (local dev)
-     - `https://linuxquest-api.onrender.com/api/auth/google/callback` (production)
+   - **Authorized JavaScript origins** (Base domains only, NO path, NO ending slash):
+     - `http://localhost:5173` (local dev frontend)
+     - `https://linuxquest.vercel.app` (example production frontend)
+   - **Authorized redirect URIs** (Full callback paths):
+     - `http://localhost:5173/api/auth/google/callback` (local dev via Vite proxy)
+     - `https://linuxquest-api.onrender.com/api/auth/google/callback` (production backend)
 5. Copy **Client ID** and **Client Secret** → save for Step 4
 
 ---
@@ -262,7 +265,7 @@ cd server && go run .
 cd app && npm install && npm run dev
 ```
 
-For local OAuth, make sure `http://localhost:8080/api/auth/google/callback` is in your Google OAuth redirect URIs.
+For local OAuth, make sure `http://localhost:5173/api/auth/google/callback` is in your Google OAuth redirect URIs (traffic is proxied to the Go backend via Vite).
 
 ---
 

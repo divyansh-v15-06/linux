@@ -1,0 +1,110 @@
+[
+  {
+    "number": 0,
+    "title": "Bootcamp",
+    "city": "Bangalore",
+    "difficulty": "Newcomer",
+    "commands": "echo,pwd,ls,cd,touch,cat,|,>",
+    "flag": "ANTARIKSHA{TERMINAL_WAKES_2026}",
+    "story_text": "Arjun, you've been assigned to the Cyber IR unit. Find orientation notes hint_*.txt in the filesystem to retrieve the flag."
+  },
+  {
+    "number": 1,
+    "title": "The Lab",
+    "city": "Bangalore",
+    "difficulty": "Beginner",
+    "commands": "ls,cd,cat,mkdir,touch",
+    "flag": "ANTARIKSHA{shiva_init.sh}",
+    "story_text": "Find the payload filename compromised by SHIVA. Payload is a SUID file dropped in home guest."
+  },
+  {
+    "number": 2,
+    "title": "The Signal",
+    "city": "Chennai",
+    "difficulty": "Beginner+",
+    "commands": "grep,sort,uniq,wc,|",
+    "flag": "ANTARIKSHA{10.48.7.219}",
+    "story_text": "Identify the destination IP of the SHIVA_PING packet stream in the log telemetry file."
+  },
+  {
+    "number": 3,
+    "title": "The Hunt",
+    "city": "Mumbai",
+    "difficulty": "Intermediate",
+    "commands": "ps,kill,pkill,top,lsof",
+    "flag": "ANTARIKSHA{3847:kworker/u8}",
+    "story_text": "A rogue processes is sending password credentials. Find the correct PID and name and kill it."
+  },
+  {
+    "number": 4,
+    "title": "Cronjob of Doom",
+    "city": "Delhi",
+    "difficulty": "Intermediate",
+    "commands": "crontab,systemctl,chmod +x,at",
+    "flag": "ANTARIKSHA{*/15 * * * *}",
+    "story_text": "SHIVA has planted a persistence backdoor in the cron jobs. Disable it and fetch schedule."
+  },
+  {
+    "number": 5,
+    "title": "Permissions",
+    "city": "Hyderabad",
+    "difficulty": "Intermediate-Advanced",
+    "commands": "chmod,chown,sudo,su,visudo",
+    "flag": "ANTARIKSHA{cdac_stat:cdac_monitor}",
+    "story_text": "A modified SUID binary allows root escalation. Find and modify permissions, lock compromised user."
+  },
+  {
+    "number": 6,
+    "title": "The Archive",
+    "city": "Pune",
+    "difficulty": "Advanced",
+    "commands": "tar,find,diff,sha256sum",
+    "flag": "ANTARIKSHA{e9c0f83d7a8b5e2c}",
+    "story_text": "Find the compressed file staging archive, verify its integrity and compare hashes with baseline."
+  },
+  {
+    "number": 7,
+    "title": "Text Surgeon",
+    "city": "Kolkata",
+    "difficulty": "Advanced",
+    "commands": "sed,awk,cut,jq",
+    "flag": "ANTARIKSHA{12.9716,77.5946}",
+    "story_text": "Extract characters from proxy logs and decode targeting coordinates."
+  },
+  {
+    "number": 8,
+    "title": "The Shell Wars",
+    "city": "Ahmedabad",
+    "difficulty": "Advanced",
+    "commands": "bash,ssh,trap,getopts",
+    "flag": "ANTARIKSHA{11:2}",
+    "story_text": "Write a robust shell script to clean cron entries across a multi-node cluster securely."
+  },
+  {
+    "number": 9,
+    "title": "Ghost Signal",
+    "city": "Chennai",
+    "difficulty": "Advanced-Pro",
+    "commands": "tcpdump,dig,nmap,nc",
+    "flag": "ANTARIKSHA{10.0.0.4:10.0.0.15}",
+    "story_text": "Listen on network interfaces and identify internal and external C2 IP addresses from raw DNS traffic."
+  },
+  {
+    "number": 10,
+    "title": "SSH Tunnels",
+    "city": "Remote",
+    "difficulty": "Pro",
+    "commands": "ssh,ssh-keygen,scp,rsync",
+    "flag": "ANTARIKSHA{d3b07384d113edec}",
+    "story_text": "Tunnel through three secure jump hosts using private keys to download memory dump database."
+  },
+  {
+    "number": 11,
+    "title": "Final Shutdown",
+    "city": "Sriharikota",
+    "difficulty": "Pro",
+    "commands": "systemctl,journalctl,vmstat,iostat,dmesg",
+    "flag": "ANTARIKSHA{shiva_watchdog:f8a7e2b1}",
+    "story_text": "Inspect systemd service dependencies, disable watchdog timers, and stop services in precise sequence."
+  }
+]
