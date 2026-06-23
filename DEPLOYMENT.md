@@ -11,7 +11,7 @@
 Browser (player)
 ├── xterm.js shell UI          → Vercel (free)
 ├── CheerpX WASM sandbox       → Cloudflare R2 disk images (free)
-└── API calls (auth, progress) → Go backend on Fly.io (free)
+└── API calls (auth, progress) → Go backend on Render.com (free)
                                       ↓
                                Supabase PostgreSQL (free)
                                Gmail SMTP (free)
@@ -31,10 +31,6 @@ node --version
 # Go 1.22+
 go version
 
-# Fly.io CLI
-curl -L https://fly.io/install.sh | sh
-flyctl auth login
-
 # Wrangler (Cloudflare CLI)
 npm install -g wrangler
 wrangler login
@@ -51,7 +47,7 @@ wrangler login
    - Application type: **Web application**
    - Authorized redirect URIs:
      - `http://localhost:8080/api/auth/google/callback` (local dev)
-     - `https://linuxquest-api.fly.dev/api/auth/google/callback` (production)
+     - `https://linuxquest-api.onrender.com/api/auth/google/callback` (production)
 5. Copy **Client ID** and **Client Secret** → save for Step 4
 
 ---
@@ -92,7 +88,7 @@ Create `.env` in the project root (never commit this):
 # Google OAuth
 GOOGLE_CLIENT_ID=your_client_id_here
 GOOGLE_CLIENT_SECRET=your_client_secret_here
-GOOGLE_REDIRECT_URI=https://linuxquest-api.fly.dev/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://linuxquest-api.onrender.com/api/auth/google/callback
 
 # Gmail SMTP
 GMAIL_USER=your_email@gmail.com
@@ -149,66 +145,47 @@ wrangler r2 object put linuxquest-images/ch1.img --file images/ch1.img
 
 ---
 
-## Step 6 — Backend Deployment (Fly.io)
+## Step 6 — Backend Deployment (Render.com)
 
-```bash
-# From the server/ directory
-cd server
+Render provides a completely card-free free tier for Go applications.
 
-# Initialize Fly app (first time only)
-flyctl launch --name linuxquest-api --region bom  # bom = Mumbai
+1. Create a free account at [render.com](https://render.com) using your GitHub account.
+2. From the Dashboard, click **New +** → **Web Service**.
+3. Connect your GitHub repository containing the `linuxquest` code.
+4. Fill in the Web Service configuration:
+   - **Name**: `linuxquest-api`
+   - **Region**: Select a close region (e.g., `Singapore` or `Oregon`)
+   - **Branch**: `main`
+   - **Runtime**: `Go`
+   - **Build Command**: `cd server && go build -o main main.go`
+   - **Start Command**: `./server/main`
+   - **Instance Type**: Select **Free** ($0/month - no credit card required)
+5. Expand the **Advanced** section to add the following **Environment Variables**:
+   - `GOOGLE_CLIENT_ID` = `your_google_client_id`
+   - `GOOGLE_CLIENT_SECRET` = `your_google_client_secret`
+   - `GOOGLE_REDIRECT_URI` = `https://linuxquest-api.onrender.com/api/auth/google/callback`
+   - `GMAIL_USER` = `your_email@gmail.com`
+   - `GMAIL_APP_PASSWORD` = `your_gmail_app_password`
+   - `DATABASE_URL` = `your_supabase_postgresql_connection_string`
+   - `JWT_SECRET` = `your_random_64_character_jwt_secret`
+   - `R2_ACCOUNT_ID` = `your_cloudflare_r2_account_id`
+   - `R2_ACCESS_KEY_ID` = `your_r2_access_key_id`
+   - `R2_SECRET_ACCESS_KEY` = `your_r2_secret_key`
+   - `R2_BUCKET_NAME` = `linuxquest-images`
+   - `R2_PUBLIC_URL` = `https://pub-xxx.r2.dev`
+   - `FRONTEND_URL` = `https://linuxquest.vercel.app`
+   - `ENV` = `production`
+6. Click **Create Web Service**.
 
-# Set environment variables on Fly
-flyctl secrets set \
-  GOOGLE_CLIENT_ID="..." \
-  GOOGLE_CLIENT_SECRET="..." \
-  GOOGLE_REDIRECT_URI="https://linuxquest-api.fly.dev/api/auth/google/callback" \
-  GMAIL_USER="..." \
-  GMAIL_APP_PASSWORD="..." \
-  DATABASE_URL="..." \
-  JWT_SECRET="..." \
-  R2_ACCOUNT_ID="..." \
-  R2_ACCESS_KEY_ID="..." \
-  R2_SECRET_ACCESS_KEY="..." \
-  R2_BUCKET_NAME="linuxquest-images" \
-  R2_PUBLIC_URL="https://pub-xxx.r2.dev" \
-  FRONTEND_URL="https://linuxquest.vercel.app" \
-  ENV="production"
+Render will automatically fetch, build, and deploy your Go backend. 
+Your API will be live at:
+`https://linuxquest-api.onrender.com`
 
-# Deploy
-flyctl deploy
+> [!NOTE]
+> Since this is on Render's Free tier, the server will automatically go to sleep after 15 minutes of inactivity. When a player visits the app after it goes to sleep, the first request might take 50-60 seconds to wake the service back up.
 
-# Check logs
-flyctl logs
+To run migrations, you can execute a one-off migration script from your local machine targeting the Supabase production DB connection string, or run it inside the Go server boot sequence.
 
-# Your API is live at:
-# https://linuxquest-api.fly.dev
-```
-
-`fly.toml` (auto-generated, keep in repo):
-```toml
-app = "linuxquest-api"
-primary_region = "bom"
-
-[build]
-
-[http_service]
-  internal_port = 8080
-  force_https = true
-  auto_stop_machines = true
-  auto_start_machines = true
-  min_machines_running = 0
-
-[vm]
-  memory = "256mb"
-  cpu_kind = "shared"
-  cpus = 1
-```
-
-Run DB migrations on Fly:
-```bash
-flyctl ssh console -C "go run /app/scripts/migrate up"
-```
 
 ---
 
@@ -226,7 +203,7 @@ vercel
 
 # Set environment variables on Vercel
 vercel env add VITE_API_URL
-# Enter: https://linuxquest-api.fly.dev
+# Enter: https://linuxquest-api.onrender.com
 
 vercel env add VITE_GOOGLE_CLIENT_ID
 # Enter: your_google_client_id
@@ -255,7 +232,7 @@ Or connect GitHub repo to Vercel for automatic deploys on every push:
 Go back to [console.cloud.google.com](https://console.cloud.google.com):
 - APIs & Services → Credentials → your OAuth client
 - Add to Authorized redirect URIs:
-  - `https://linuxquest-api.fly.dev/api/auth/google/callback`
+  - `https://linuxquest-api.onrender.com/api/auth/google/callback`
 - Add to Authorized JavaScript origins:
   - `https://linuxquest.vercel.app`
 
@@ -295,7 +272,7 @@ After all steps, check:
 
 ```bash
 # 1. Backend health
-curl https://linuxquest-api.fly.dev/api/health
+curl https://linuxquest-api.onrender.com/api/health
 # Expected: {"status":"ok"}
 
 # 2. R2 image accessible

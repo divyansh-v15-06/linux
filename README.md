@@ -446,7 +446,7 @@ Player types commands — execute on their own CPU, instantly
 |---------|--------|------|
 | Terminal emulator | `xterm.js` + `xterm-addon-fit` | Free |
 | Frontend | React + Vite (TypeScript) on Vercel | Free |
-| Backend API | Go + Gin on Fly.io | Free |
+| Backend API | Go + Gin on Render.com | Free |
 | **Linux sandbox** | **CheerpX (WebAssembly) — runs in browser** | **Free** |
 | Disk images | Cloudflare R2 (~2GB, 12 images) | Free |
 | Auth | Google OAuth 2.0 | Free |

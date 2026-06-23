@@ -12,7 +12,7 @@
 **Flagship campaign:** Operation Antariksha (11 chapters, story in `story.md`).
 **Stack:**
 - Frontend: React + Vite (TypeScript) — single-page, shell-only UI
-- Backend: Go + Gin (Fly.io free tier)
+- Backend: Go + Gin (Render.com free tier)
 - Database: PostgreSQL (Supabase free tier)
 - Auth: Google OAuth 2.0 + JWT
 - Email: Gmail SMTP with App Password
@@ -47,7 +47,7 @@
   ```
   linuxquest/
   ├── app/          ← React + Vite frontend (shell UI)
-  ├── server/       ← Go + Gin backend (Fly.io)
+  ├── server/       ← Go + Gin backend (Render.com)
   ├── images/       ← Linux disk images per chapter (uploaded to R2)
   ├── campaigns/    ← JSON campaign + chapter definitions
   ├── docs/         ← Architecture, API docs
