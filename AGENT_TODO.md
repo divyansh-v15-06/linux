@@ -260,7 +260,7 @@ smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, body)
   - `Ctrl+V` / `Ctrl+Shift+V` via `attachCustomKeyEventHandler` → returns `false`
   - Right-click via `contextmenu` → `preventDefault()`
   - Browser paste event → `preventDefault()` + `stopPropagation()`
-  - On paste attempt: print `[PASTE DISABLED] Type the command. No shortcuts here.` in amber
+  - On paste attempt: print `[SHIVA] lol. that's why AI is taking ur job.` in red
 
 **Acceptance criteria:** Site loads as full-screen black terminal. Boot sequence plays. Prompt appears. No other UI visible. Ctrl+V, right-click paste, and middle-click paste all show the disabled message — nothing is pasted.
 

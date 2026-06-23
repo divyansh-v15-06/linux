@@ -21,7 +21,7 @@ not for leaderboards, not for mission briefs. Everything renders inside the shel
 
 When a player tries to paste:
 ```
-[PASTE DISABLED] Type the command. No shortcuts here.
+[SHIVA] lol. that's why AI is taking ur job.
 ```
 
 ---
@@ -308,7 +308,7 @@ No other fonts. No colors outside this palette.
 // Block Ctrl+V / Ctrl+Shift+V
 terminal.attachCustomKeyEventHandler((e) => {
   if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) {
-    terminal.writeln('\r\n\x1b[33m[PASTE DISABLED] Type the command. No shortcuts here.\x1b[0m');
+    terminal.writeln('\r\n\x1b[31m[SHIVA] lol. that\'s why AI is taking ur job.\x1b[0m');
     return false;
   }
   return true;
@@ -321,7 +321,7 @@ terminal.element.addEventListener('contextmenu', (e) => e.preventDefault());
 terminal.element.addEventListener('paste', (e) => {
   e.preventDefault();
   e.stopPropagation();
-  terminal.writeln('\r\n\x1b[33m[PASTE DISABLED] Type the command. No shortcuts here.\x1b[0m');
+  terminal.writeln('\r\n\x1b[31m[SHIVA] lol. that\'s why AI is taking ur job.\x1b[0m');
 });
 ```
 
